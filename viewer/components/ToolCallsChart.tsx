@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Bar,
   XAxis,
@@ -12,6 +13,28 @@ import {
 } from "recharts";
 import { RunTurn } from "@/lib/types";
 
+function useIsMobile(breakpointPx = 640): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia(`(max-width: ${breakpointPx}px)`);
+    const onChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      setIsMobile("matches" in e ? e.matches : (e as MediaQueryList).matches);
+    };
+
+    onChange(mql);
+    if ("addEventListener" in mql) {
+      mql.addEventListener("change", onChange as (e: MediaQueryListEvent) => void);
+      return () => mql.removeEventListener("change", onChange as (e: MediaQueryListEvent) => void);
+    }
+    mql.addListener(onChange as (e: MediaQueryListEvent) => void);
+    return () => mql.removeListener(onChange as (e: MediaQueryListEvent) => void);
+  }, [breakpointPx]);
+
+  return isMobile;
+}
+
 interface ToolCallsChartProps {
   turns: RunTurn[];
 }
@@ -19,9 +42,7 @@ interface ToolCallsChartProps {
 type ToolCallsChartDataPoint = {
   turn: number;
   time: string;
-  // Dynamic keys per tool name (values are counts)
-  [toolName: string]: number | string;
-};
+} & Record<string, number>;
 
 const COLORS = [
   "#0EA5E9",
@@ -50,6 +71,8 @@ function prettifyToolName(name: string): string {
 }
 
 export function ToolCallsChart({ turns }: ToolCallsChartProps) {
+  const isMobile = useIsMobile(640);
+
   if (turns.length === 0) {
     return null;
   }
@@ -77,10 +100,7 @@ export function ToolCallsChart({ turns }: ToolCallsChartProps) {
 
   const maxTotal = Math.max(
     ...data.map((d) =>
-      toolTypes.reduce((sum, t) => {
-        const v = d[t];
-        return sum + (typeof v === "number" ? v : 0);
-      }, 0),
+      toolTypes.reduce((sum, t) => sum + (d[t] || 0), 0),
     ),
     0,
   );
@@ -97,7 +117,11 @@ export function ToolCallsChart({ turns }: ToolCallsChartProps) {
     <ResponsiveContainer width="100%" height="100%">
       <BarChart
         data={data}
-        margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+        margin={
+          isMobile
+            ? { top: 10, right: 12, left: 0, bottom: 10 }
+            : { top: 10, right: 30, left: 10, bottom: 10 }
+        }
       >
         <CartesianGrid
           strokeDasharray="3 3"
@@ -115,10 +139,10 @@ export function ToolCallsChart({ turns }: ToolCallsChartProps) {
         <YAxis
           domain={[0, yMax]}
           ticks={yTicks}
-          tick={{ fill: "#6b7280", fontSize: 12 }}
+          tick={{ fill: "#6b7280", fontSize: isMobile ? 10 : 12 }}
           tickLine={false}
           axisLine={false}
-          width={40}
+          width={isMobile ? 30 : 40}
           allowDecimals={false}
         />
         <Tooltip

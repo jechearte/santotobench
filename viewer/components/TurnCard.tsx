@@ -266,8 +266,8 @@ export function TurnCard({ turn, index, defaultExpanded = false, previousTurn }:
           </div>
 
           {/* Separator between states: horizontal on mobile, vertical on desktop */}
-          <div className="flex items-stretch justify-center py-2 md:py-0">
-            <div className="w-full h-px md:w-px md:h-16 lg:h-20 bg-pizarra-200 rounded-full" />
+          <div className="flex items-stretch justify-center py-2 md:py-0 md:px-2">
+            <div className="h-px w-full md:h-20 md:w-px bg-pizarra-200 rounded-full" />
           </div>
 
           {/* Final state */}

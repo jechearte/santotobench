@@ -56,13 +56,18 @@ function useIsMobile(breakpointPx = 640): boolean {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const mql = window.matchMedia(`(max-width: ${breakpointPx}px)`);
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    const onChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      setIsMobile("matches" in e ? e.matches : (e as MediaQueryList).matches);
+    };
 
-    // Set initial value
-    setIsMobile(mql.matches);
-
-    mql.addEventListener("change", onChange);
-    return () => mql.removeEventListener("change", onChange);
+    onChange(mql);
+    if ("addEventListener" in mql) {
+      mql.addEventListener("change", onChange as (e: MediaQueryListEvent) => void);
+      return () => mql.removeEventListener("change", onChange as (e: MediaQueryListEvent) => void);
+    }
+    // Safari fallback
+    mql.addListener(onChange as (e: MediaQueryListEvent) => void);
+    return () => mql.removeListener(onChange as (e: MediaQueryListEvent) => void);
   }, [breakpointPx]);
 
   return isMobile;
@@ -108,7 +113,7 @@ export function ModelCashBarChart({ data }: ModelCashBarChartProps) {
     <ResponsiveContainer width="100%" height={isMobile ? mobileHeight : "100%"}>
       <BarChart
         data={safeData}
-        layout={isMobile ? "vertical" : "horizontal"}
+        layout={isMobile ? "vertical" : undefined}
         margin={
           isMobile
             ? { top: 10, right: 16, left: 8, bottom: 10 }
@@ -118,8 +123,8 @@ export function ModelCashBarChart({ data }: ModelCashBarChartProps) {
         <CartesianGrid
           strokeDasharray="3 3"
           stroke="#e5e7eb"
-          vertical={!isMobile ? false : true}
-          horizontal={isMobile ? false : true}
+          vertical={isMobile}
+          horizontal={!isMobile}
         />
 
         {isMobile ? (

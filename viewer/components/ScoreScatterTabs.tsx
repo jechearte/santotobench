@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CartesianGrid,
   Label,
@@ -36,10 +36,10 @@ type CashBarDatum = {
 
 type TabId = "cash-bar" | "cost" | "tokens";
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: "cash-bar", label: "Cash generated" },
-  { id: "cost", label: "Score vs Cost" },
-  { id: "tokens", label: "Score vs Tokens" },
+const TABS: { id: TabId; label: string; mobileLabel: string }[] = [
+  { id: "cash-bar", label: "Cash generated", mobileLabel: "Cash" },
+  { id: "cost", label: "Cash vs Cost", mobileLabel: "Cost" },
+  { id: "tokens", label: "Cash vs Tokens", mobileLabel: "Tokens" },
 ];
 
 function formatEur(value: number): string {
@@ -61,6 +61,45 @@ function formatEurWithDecimals(value: number): string {
 
 function formatNumber(value: number): string {
   return new Intl.NumberFormat("en-US").format(Math.round(value || 0));
+}
+
+function formatEurCompact(value: number): string {
+  if (!Number.isFinite(value)) return "€0";
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `€${(value / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `€${Math.round(value / 1_000)}k`;
+  return `€${Math.round(value)}`;
+}
+
+function formatNumberCompact(value: number): string {
+  if (!Number.isFinite(value)) return "0";
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `${Math.round(value / 1_000)}k`;
+  return String(Math.round(value));
+}
+
+function useIsMobile(breakpointPx = 640): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia(`(max-width: ${breakpointPx}px)`);
+    const onChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      setIsMobile("matches" in e ? e.matches : (e as MediaQueryList).matches);
+    };
+
+    onChange(mql);
+    if ("addEventListener" in mql) {
+      mql.addEventListener("change", onChange as (e: MediaQueryListEvent) => void);
+      return () => mql.removeEventListener("change", onChange as (e: MediaQueryListEvent) => void);
+    }
+    // Safari fallback
+    mql.addListener(onChange as (e: MediaQueryListEvent) => void);
+    return () => mql.removeListener(onChange as (e: MediaQueryListEvent) => void);
+  }, [breakpointPx]);
+
+  return isMobile;
 }
 
 function getNiceTicks(maxValue: number, sections = 4): { ticks: number[]; maxTick: number } {
@@ -118,12 +157,14 @@ function ModelScatterChart({
   xLabel,
   xFormatter,
   humanCashGenerated,
+  isMobile,
 }: {
   data: Array<ScoreScatterPoint & { color: string }>;
   xKey: "totalCostEur" | "totalTokens";
   xLabel: string;
   xFormatter: (value: number) => string;
   humanCashGenerated: number | null;
+  isMobile: boolean;
 }) {
   if (!data || data.length === 0) return null;
 
@@ -133,8 +174,8 @@ function ModelScatterChart({
   const xMax = Math.max(...xValues, 0);
   const yMax = Math.max(...yValues, 0);
 
-  const { ticks: xTicks, maxTick: xMaxTick } = getNiceTicks(xMax);
-  const { ticks: yTicks, maxTick: yMaxTick } = getNiceTicks(yMax);
+  const { ticks: xTicks, maxTick: xMaxTick } = getNiceTicks(xMax, isMobile ? 3 : 4);
+  const { ticks: yTicks, maxTick: yMaxTick } = getNiceTicks(yMax, isMobile ? 3 : 4);
 
   const xDomain: [number, number] = [0, xMaxTick || 1];
   const yDomain: [number, number] = [0, yMaxTick || 1];
@@ -145,52 +186,77 @@ function ModelScatterChart({
   );
   const humanColor = humanPoint ? humanPoint.color : getProviderColor("human");
   const humanRefOpacity = 0.55;
-  const humanLabel =
+  const humanLabelShort = "Human";
+  const humanLabelFull =
     humanCashGenerated !== null ? `Human: ${formatEur(humanCashGenerated)}` : "";
 
+  // Formatters adaptados a mobile
+  const mobileXFormatter = xKey === "totalCostEur" ? formatEurCompact : formatNumberCompact;
+  const mobileYFormatter = formatEurCompact;
+
   return (
-    <div className="h-[360px] w-full">
+    <div className={isMobile ? "h-[300px] w-full" : "h-[360px] w-full"}>
       <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart margin={{ top: 8, right: 24, bottom: 12, left: 8 }}>
+        <ScatterChart
+          margin={
+            isMobile
+              ? { top: 20, right: 12, bottom: 36, left: 4 }
+              : { top: 8, right: 24, bottom: 12, left: 8 }
+          }
+        >
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis
             type="number"
             dataKey={xKey}
             name={xLabel}
             domain={xDomain}
-            tickFormatter={xFormatter}
-            tick={{ fill: "#6b7280", fontSize: 12 }}
+            tickFormatter={isMobile ? mobileXFormatter : xFormatter}
+            tick={{ fill: "#6b7280", fontSize: isMobile ? 10 : 12 }}
             tickLine={false}
             axisLine={{ stroke: "#e5e7eb" }}
             ticks={xTicks}
-            label={{
-              value: xLabel,
-              position: "insideBottom",
-              offset: -2,
-              fill: "#475569",
-              fontSize: 12,
-            }}
+            label={
+              isMobile
+                ? {
+                    value: xKey === "totalCostEur" ? "Cost (€)" : "Tokens",
+                    position: "insideBottom",
+                    offset: -4,
+                    fill: "#475569",
+                    fontSize: 10,
+                  }
+                : {
+                    value: xLabel,
+                    position: "insideBottom",
+                    offset: -2,
+                    fill: "#475569",
+                    fontSize: 12,
+                  }
+            }
           />
           <YAxis
             type="number"
             dataKey="cashGenerated"
             name="Cash generated"
             domain={yDomain}
-            tickFormatter={formatEur}
-            tick={{ fill: "#6b7280", fontSize: 12 }}
+            tickFormatter={isMobile ? mobileYFormatter : formatEur}
+            tick={{ fill: "#6b7280", fontSize: isMobile ? 10 : 12 }}
             tickLine={false}
             axisLine={{ stroke: "#e5e7eb" }}
             ticks={yTicks}
-            width={90}
-            label={{
-              value: "Cash generated (€)",
-              angle: -90,
-              position: "insideLeft",
-              offset: 0,
-              style: { textAnchor: "middle" },
-              fill: "#475569",
-              fontSize: 12,
-            }}
+            width={isMobile ? 45 : 90}
+            label={
+              isMobile
+                ? undefined
+                : {
+                    value: "Cash generated (€)",
+                    angle: -90,
+                    position: "insideLeft",
+                    offset: 0,
+                    style: { textAnchor: "middle" },
+                    fill: "#475569",
+                    fontSize: 12,
+                  }
+            }
           />
           {humanCashGenerated !== null && (
             <ReferenceLine
@@ -205,21 +271,21 @@ function ModelScatterChart({
                   content={(props: any) => {
                     const vb = props?.viewBox as { x: number; y: number; width: number; height: number } | undefined;
                     if (!vb) return null;
-                    // Place label above the line, aligned to the left
-                    const x = vb.x + 8;
-                    const y = vb.y - 8;
+                    // En mobile: label arriba a la derecha, fuera del área de puntos
+                    const x = isMobile ? vb.x + vb.width - 4 : vb.x + 8;
+                    const y = vb.y - 6;
                     return (
                       <text
                         x={x}
                         y={y}
-                        textAnchor="start"
+                        textAnchor={isMobile ? "end" : "start"}
                         dominantBaseline="ideographic"
                         fill={humanColor}
                         opacity={humanRefOpacity}
-                        fontSize={12}
+                        fontSize={isMobile ? 10 : 12}
                         fontWeight={600}
                       >
-                        {humanLabel}
+                        {isMobile ? humanLabelShort : humanLabelFull}
                       </text>
                     );
                   }}
@@ -236,7 +302,7 @@ function ModelScatterChart({
                 <circle
                   cx={cx}
                   cy={cy}
-                  r={7}
+                  r={isMobile ? 9 : 7}
                   fill={payload.color}
                   stroke="#0f172a1a"
                   strokeWidth={2}
@@ -258,6 +324,7 @@ export function ScoreScatterTabs({
   barData?: CashBarDatum[];
 }) {
   const [activeTab, setActiveTab] = useState<TabId>("cash-bar");
+  const isMobile = useIsMobile(640);
   const hasData = data.length > 0;
 
   const coloredData = useMemo(
@@ -298,7 +365,7 @@ export function ScoreScatterTabs({
   if (!hasData) return null;
 
   return (
-    <div className="bg-white rounded-2xl border border-pizarra-200 p-6">
+    <div className="bg-white rounded-2xl border border-pizarra-200 p-4 sm:p-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
         <div>
           <h3 className="text-lg font-semibold text-pizarra-800">
@@ -330,7 +397,7 @@ export function ScoreScatterTabs({
                 ].join(" ")}
                 onClick={() => setActiveTab(tab.id)}
               >
-                {tab.label}
+                {isMobile ? tab.mobileLabel : tab.label}
               </button>
             );
           })}
@@ -344,6 +411,7 @@ export function ScoreScatterTabs({
           xLabel="Inference cost (€)"
           xFormatter={formatEur}
           humanCashGenerated={humanCashGenerated}
+          isMobile={isMobile}
         />
       )}
       {activeTab === "tokens" && (
@@ -353,6 +421,7 @@ export function ScoreScatterTabs({
           xLabel="Total tokens"
           xFormatter={formatNumber}
           humanCashGenerated={humanCashGenerated}
+          isMobile={isMobile}
         />
       )}
       {activeTab === "cash-bar" && (

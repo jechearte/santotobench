@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Line,
   XAxis,
@@ -11,6 +12,28 @@ import {
   LineChart,
 } from "recharts";
 import { RunTurn } from "@/lib/types";
+
+function useIsMobile(breakpointPx = 640): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia(`(max-width: ${breakpointPx}px)`);
+    const onChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      setIsMobile("matches" in e ? e.matches : (e as MediaQueryList).matches);
+    };
+
+    onChange(mql);
+    if ("addEventListener" in mql) {
+      mql.addEventListener("change", onChange as (e: MediaQueryListEvent) => void);
+      return () => mql.removeEventListener("change", onChange as (e: MediaQueryListEvent) => void);
+    }
+    mql.addListener(onChange as (e: MediaQueryListEvent) => void);
+    return () => mql.removeListener(onChange as (e: MediaQueryListEvent) => void);
+  }, [breakpointPx]);
+
+  return isMobile;
+}
 
 interface PriceChartProps {
   turns: RunTurn[];
@@ -25,6 +48,8 @@ interface PriceChartDataPoint {
 }
 
 export function PriceChart({ turns }: PriceChartProps) {
+  const isMobile = useIsMobile(640);
+
   if (turns.length === 0) {
     return null;
   }
@@ -60,7 +85,11 @@ export function PriceChart({ turns }: PriceChartProps) {
     <ResponsiveContainer width="100%" height="100%">
       <LineChart
         data={data}
-        margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+        margin={
+          isMobile
+            ? { top: 10, right: 12, left: 0, bottom: 10 }
+            : { top: 10, right: 30, left: 10, bottom: 10 }
+        }
       >
         <CartesianGrid
           strokeDasharray="3 3"
@@ -78,10 +107,10 @@ export function PriceChart({ turns }: PriceChartProps) {
         <YAxis
           domain={[minTick, maxTick]}
           ticks={yTicks}
-          tick={{ fill: "#6b7280", fontSize: 12 }}
+          tick={{ fill: "#6b7280", fontSize: isMobile ? 10 : 12 }}
           tickLine={false}
           axisLine={false}
-          width={60}
+          width={isMobile ? 40 : 60}
           tickFormatter={formatPriceTick}
         />
         <Tooltip
@@ -102,8 +131,8 @@ export function PriceChart({ turns }: PriceChartProps) {
               name === "pintxo"
                 ? "Pintxo"
                 : name === "bocadillo"
-                ? "Bocadillo"
-                : "Sidra";
+                ? "Sandwich"
+                : "Cider";
             return [`${value.toFixed(2)}€`, label];
           }}
           labelFormatter={(label) => `${label}`}
@@ -112,8 +141,8 @@ export function PriceChart({ turns }: PriceChartProps) {
           wrapperStyle={{ paddingTop: 8 }}
           formatter={(value) => {
             if (value === "pintxo") return "Pintxo";
-            if (value === "bocadillo") return "Bocadillo";
-            if (value === "sidra") return "Sidra";
+            if (value === "bocadillo") return "Sandwich";
+            if (value === "sidra") return "Cider";
             return value;
           }}
         />
