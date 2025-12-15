@@ -1,55 +1,54 @@
-## Simulador del puesto de txistorra – Santo Tomás
+## Santo Tomás Txistorra Stand Simulator
 
-### Requisitos
+### Requirements
 - Python 3.11+
-- Instalar dependencias:
+- Install dependencies:
   ```bash
   pip install -r requirements.txt
   ```
 
-### Ejecutar una partida
+### Run a game
 ```bash
 python cli.py play --config configs/config.yml --seed 42 --agent openai/gpt-5.1 --reasoning-effort medium
 ```
 
-### Ejecutar experimentos
+### Run experiments
 ```bash
 python cli.py run-experiments --experiments configs/experiments.yml
 ```
 
 ### Docker
-Construir imagen en local (amd64):
+Build image locally (amd64):
 ```bash
 docker build --platform linux/amd64 -t santo-tomas-sim .
 ```
 
-Lanzar contenedor (ayuda CLI):
+Run container (CLI help):
 ```bash
 docker compose up --build
 ```
 
-### Estructura
-- `sim/`: motor de simulación, demanda y tipos
-- `agent/`: agentes (heurístico, LLM placeholder) y costes
-- `runner/`: ejecución de experimentos y agregación básica
-- `configs/`: configuración por defecto y matriz de experimentos
-- `runs/`: resultados (se crea al ejecutar)
+### Structure
+- `sim/`: simulation engine, demand and types
+- `agent/`: agents (heuristic, LLM placeholder) and costs
+- `runner/`: experiment execution and basic aggregation
+- `configs/`: default configuration and experiment matrix
+- `runs/`: results (created when executing)
 
-### Notas
-- El agente debe usar `get_status` y `get_prices` para consultar caja, stock, entregas y precios.
-- Compras con coste > caja son rechazadas.
-- El turno avanza únicamente con `end_turn`.
-- Para usar OpenAI Responses API, configura `OPENAI_API_KEY`:
-  - **Opción 1 (recomendada)**: Crea un archivo `.env` en la raíz del proyecto:
+### Notes
+- The agent must use `get_status` and `get_prices` to query cash, stock, deliveries and prices.
+- Purchases with cost > cash are rejected.
+- The turn advances only with `end_turn`.
+- To use OpenAI Responses API, configure `OPENAI_API_KEY`:
+  - **Option 1 (recommended)**: Create a `.env` file in the project root:
     ```
-    OPENAI_API_KEY=sk-tu-clave-aqui
+    OPENAI_API_KEY=sk-your-key-here
     ```
-  - **Opción 2**: Define la variable de entorno:
+  - **Option 2**: Define the environment variable:
     - macOS/Linux: `export OPENAI_API_KEY="sk-..."`
     - Windows (PowerShell): `$Env:OPENAI_API_KEY="sk-..."`
 
-### Configuración de tools y prompt
-- Tools agnósticas al proveedor: `configs/tools.yml`. Cada proveedor transformará este esquema al formato requerido.
-- Prompt del sistema compartido: `agent/prompts/system.txt`.
+### Tools and prompt configuration
+- Provider-agnostic tools: `configs/tools.yml`. Each provider will transform this schema to the required format.
+- Shared system prompt: `agent/prompts/system.txt`.
 *** End Patch  ***!
-
