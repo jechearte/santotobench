@@ -25,10 +25,10 @@ build/
 *.tsbuildinfo
 next-env.d.ts
 
-# Datos generados
-runs/
-# Ignorar .jsonl solo en runs/ (los de viewer/data/ son necesarios para la web)
-runs/**/*.jsonl
+# Datos generados (salidas del simulador en la raíz del repo)
+/runs/
+# Ignorar .jsonl solo dentro de /runs/ (los de viewer/data/ son necesarios para la web)
+/runs/**/*.jsonl
 
 # Herramientas de desarrollo
 .playwright-mcp/
