@@ -27,7 +27,8 @@ next-env.d.ts
 
 # Datos generados
 runs/
-*.jsonl
+# Ignorar .jsonl solo en runs/ (los de viewer/data/ son necesarios para la web)
+runs/**/*.jsonl
 
 # Variables de entorno
 .env
@@ -51,9 +52,6 @@ Thumbs.db
 
 # Docker
 *.log
-
-# Herramientas de desarrollo
-.playwright-mcp/
 
 # Otros
 *.pem
