@@ -30,6 +30,9 @@ runs/
 # Ignorar .jsonl solo en runs/ (los de viewer/data/ son necesarios para la web)
 runs/**/*.jsonl
 
+# Herramientas de desarrollo
+.playwright-mcp/
+
 # Variables de entorno
 .env
 .env*.local

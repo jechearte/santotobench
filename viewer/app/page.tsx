@@ -3,6 +3,9 @@ import { formatEur } from "@/lib/parseRun";
 import { RunsTable } from "@/components/RunsTable";
 import { ScoreScatterTabs } from "@/components/ScoreScatterTabs";
 
+export const dynamic = "force-static";
+export const revalidate = false;
+
 async function getRuns(): Promise<RunSummary[]> {
   const { listRunFiles, readRunFile } = await import("@/lib/fs");
   const { parseRunContent, calculateSummary, extractMetaFromContent } = await import("@/lib/parseRun");

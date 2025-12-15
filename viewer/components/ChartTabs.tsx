@@ -1,31 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CashChart } from "./CashChart";
 import { PriceChart } from "./PriceChart";
 import { StockChart } from "./StockChart";
 import { RevenueExpensesChart } from "./RevenueExpensesChart";
 import { ToolCallsChart } from "./ToolCallsChart";
-import { QueueChart } from "./QueueChart";
 import { RunTurn } from "@/lib/types";
-
-function useIsMobile(breakpointPx = 640): boolean {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mql = window.matchMedia(`(max-width: ${breakpointPx}px)`);
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-
-    // Set initial value
-    setIsMobile(mql.matches);
-
-    mql.addEventListener("change", onChange);
-    return () => mql.removeEventListener("change", onChange);
-  }, [breakpointPx]);
-
-  return isMobile;
-}
 
 interface ChartTabsProps {
   turns: RunTurn[];
@@ -37,23 +18,21 @@ const TABS = [
   { id: "stock", label: "Stock" },
   { id: "revenue-expenses", label: "Revenue" },
   { id: "tool-calls", label: "Tools" },
-  { id: "queue", label: "Queue" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
 
 export function ChartTabs({ turns }: ChartTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>("cash");
-  const isMobile = useIsMobile(640);
 
   if (turns.length === 0) {
     return null;
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-pizarra-200 p-4 sm:p-6">
-      <div className={`flex ${isMobile ? "flex-col items-center" : "items-center justify-between"} gap-3 mb-4`}>
-        <h3 className={`text-lg font-semibold text-pizarra-800 ${isMobile ? "self-start" : ""}`}>
+    <div className="bg-white rounded-2xl border border-pizarra-200 p-6">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <h3 className="text-lg font-semibold text-pizarra-800">
           Simulation evolution
         </h3>
         <div
@@ -70,9 +49,7 @@ export function ChartTabs({ turns }: ChartTabsProps) {
                 role="tab"
                 aria-selected={isActive}
                 className={[
-                  isMobile
-                    ? "px-2 py-1 text-xs font-medium rounded-full transition-colors cursor-pointer"
-                    : "px-3 py-1.5 text-sm font-medium rounded-full transition-colors cursor-pointer",
+                  "px-3 py-1.5 text-sm font-medium rounded-full transition-colors cursor-pointer",
                   isActive
                     ? "bg-white text-pizarra-900 shadow-sm"
                     : "text-pizarra-500 hover:text-pizarra-800 hover:bg-white/60",
@@ -92,7 +69,6 @@ export function ChartTabs({ turns }: ChartTabsProps) {
         {activeTab === "stock" && <StockChart turns={turns} />}
         {activeTab === "revenue-expenses" && <RevenueExpensesChart turns={turns} />}
         {activeTab === "tool-calls" && <ToolCallsChart turns={turns} />}
-        {activeTab === "queue" && <QueueChart turns={turns} />}
       </div>
     </div>
   );

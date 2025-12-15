@@ -108,7 +108,7 @@ export function ModelCashBarChart({ data }: ModelCashBarChartProps) {
     <ResponsiveContainer width="100%" height={isMobile ? mobileHeight : "100%"}>
       <BarChart
         data={safeData}
-        layout={isMobile ? "vertical" : undefined}
+        layout={isMobile ? "vertical" : "horizontal"}
         margin={
           isMobile
             ? { top: 10, right: 16, left: 8, bottom: 10 }
@@ -118,8 +118,8 @@ export function ModelCashBarChart({ data }: ModelCashBarChartProps) {
         <CartesianGrid
           strokeDasharray="3 3"
           stroke="#e5e7eb"
-          vertical={isMobile}
-          horizontal={!isMobile}
+          vertical={!isMobile ? false : true}
+          horizontal={isMobile ? false : true}
         />
 
         {isMobile ? (

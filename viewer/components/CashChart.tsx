@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Line,
   XAxis,
@@ -12,25 +11,6 @@ import {
   ComposedChart,
 } from "recharts";
 import { RunTurn } from "@/lib/types";
-
-function useIsMobile(breakpointPx = 640): boolean {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mql = window.matchMedia(`(max-width: ${breakpointPx}px)`);
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-
-    // Set initial value
-    setIsMobile(mql.matches);
-
-    // Modern browsers
-    mql.addEventListener("change", onChange);
-    return () => mql.removeEventListener("change", onChange);
-  }, [breakpointPx]);
-
-  return isMobile;
-}
 
 interface CashChartProps {
   turns: RunTurn[];
@@ -52,8 +32,6 @@ function formatEur(value: number): string {
 }
 
 export function CashChart({ turns }: CashChartProps) {
-  const isMobile = useIsMobile(640);
-
   if (turns.length === 0) {
     return null;
   }
@@ -92,11 +70,7 @@ export function CashChart({ turns }: CashChartProps) {
     <ResponsiveContainer width="100%" height="100%">
       <ComposedChart
         data={data}
-        margin={
-          isMobile
-            ? { top: 10, right: 12, left: 0, bottom: 10 }
-            : { top: 10, right: 30, left: 10, bottom: 10 }
-        }
+        margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
       >
         <defs>
           <linearGradient id="cashGradient" x1="0" y1="0" x2="0" y2="1">
@@ -120,11 +94,11 @@ export function CashChart({ turns }: CashChartProps) {
         <YAxis
           domain={[yMin, yMax]}
           ticks={yTicks}
-          tick={{ fill: "#6b7280", fontSize: isMobile ? 10 : 12 }}
+          tick={{ fill: "#6b7280", fontSize: 12 }}
           tickLine={false}
           axisLine={false}
           tickFormatter={(value) => formatEur(value)}
-          width={isMobile ? 45 : 80}
+          width={80}
         />
         <Tooltip
           contentStyle={{

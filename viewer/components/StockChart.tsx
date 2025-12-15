@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Line,
   XAxis,
@@ -12,24 +11,6 @@ import {
   LineChart,
 } from "recharts";
 import { RunTurn } from "@/lib/types";
-
-function useIsMobile(breakpointPx = 640): boolean {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mql = window.matchMedia(`(max-width: ${breakpointPx}px)`);
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-
-    // Set initial value
-    setIsMobile(mql.matches);
-
-    mql.addEventListener("change", onChange);
-    return () => mql.removeEventListener("change", onChange);
-  }, [breakpointPx]);
-
-  return isMobile;
-}
 
 interface StockChartProps {
   turns: RunTurn[];
@@ -44,8 +25,6 @@ interface StockChartDataPoint {
 }
 
 export function StockChart({ turns }: StockChartProps) {
-  const isMobile = useIsMobile(640);
-
   if (turns.length === 0) {
     return null;
   }
@@ -108,11 +87,7 @@ export function StockChart({ turns }: StockChartProps) {
     <ResponsiveContainer width="100%" height="100%">
       <LineChart
         data={data}
-        margin={
-          isMobile
-            ? { top: 10, right: 12, left: 0, bottom: 10 }
-            : { top: 10, right: 30, left: 10, bottom: 10 }
-        }
+        margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
       >
         <CartesianGrid
           strokeDasharray="3 3"
@@ -130,10 +105,10 @@ export function StockChart({ turns }: StockChartProps) {
         <YAxis
           domain={[minTick, maxTick]}
           ticks={yTicks}
-          tick={{ fill: "#6b7280", fontSize: isMobile ? 10 : 12 }}
+          tick={{ fill: "#6b7280", fontSize: 12 }}
           tickLine={false}
           axisLine={false}
-          width={isMobile ? 40 : 60}
+          width={60}
         />
         <Tooltip
           contentStyle={{
@@ -153,8 +128,8 @@ export function StockChart({ turns }: StockChartProps) {
               name === "txistorra"
                 ? "Txistorra"
                 : name === "pan"
-                ? "Bread"
-                : "Cider";
+                ? "Pan"
+                : "Sidra";
             return [`${value.toFixed(1)} uds`, label];
           }}
           labelFormatter={(label) => `${label}`}
@@ -164,7 +139,7 @@ export function StockChart({ turns }: StockChartProps) {
           formatter={(value) => {
             if (value === "txistorra") return "Txistorra";
             if (value === "pan") return "Pan";
-            if (value === "sidra") return "Cider";
+            if (value === "sidra") return "Sidra";
             return value;
           }}
         />
