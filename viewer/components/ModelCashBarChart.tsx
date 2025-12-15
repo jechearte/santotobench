@@ -56,18 +56,13 @@ function useIsMobile(breakpointPx = 640): boolean {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const mql = window.matchMedia(`(max-width: ${breakpointPx}px)`);
-    const onChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      setIsMobile("matches" in e ? e.matches : (e as MediaQueryList).matches);
-    };
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
 
-    onChange(mql);
-    if ("addEventListener" in mql) {
-      mql.addEventListener("change", onChange as (e: MediaQueryListEvent) => void);
-      return () => mql.removeEventListener("change", onChange as (e: MediaQueryListEvent) => void);
-    }
-    // Safari fallback
-    mql.addListener(onChange as (e: MediaQueryListEvent) => void);
-    return () => mql.removeListener(onChange as (e: MediaQueryListEvent) => void);
+    // Set initial value
+    setIsMobile(mql.matches);
+
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
   }, [breakpointPx]);
 
   return isMobile;

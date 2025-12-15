@@ -19,17 +19,13 @@ function useIsMobile(breakpointPx = 640): boolean {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const mql = window.matchMedia(`(max-width: ${breakpointPx}px)`);
-    const onChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      setIsMobile("matches" in e ? e.matches : (e as MediaQueryList).matches);
-    };
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
 
-    onChange(mql);
-    if ("addEventListener" in mql) {
-      mql.addEventListener("change", onChange as (e: MediaQueryListEvent) => void);
-      return () => mql.removeEventListener("change", onChange as (e: MediaQueryListEvent) => void);
-    }
-    mql.addListener(onChange as (e: MediaQueryListEvent) => void);
-    return () => mql.removeListener(onChange as (e: MediaQueryListEvent) => void);
+    // Set initial value
+    setIsMobile(mql.matches);
+
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
   }, [breakpointPx]);
 
   return isMobile;
@@ -42,7 +38,9 @@ interface ToolCallsChartProps {
 type ToolCallsChartDataPoint = {
   turn: number;
   time: string;
-} & Record<string, number>;
+  // Dynamic keys per tool name (values are counts)
+  [toolName: string]: number | string;
+};
 
 const COLORS = [
   "#0EA5E9",
@@ -100,7 +98,10 @@ export function ToolCallsChart({ turns }: ToolCallsChartProps) {
 
   const maxTotal = Math.max(
     ...data.map((d) =>
-      toolTypes.reduce((sum, t) => sum + (d[t] || 0), 0),
+      toolTypes.reduce((sum, t) => {
+        const v = d[t];
+        return sum + (typeof v === "number" ? v : 0);
+      }, 0),
     ),
     0,
   );
