@@ -1,0 +1,12 @@
+experiments:
+  - name: baseline_grid
+    seeds: [1]
+    replicas: 3
+    max_workers: 1
+    models:
+      - type: llm
+        provider: openai
+        model: gpt-5.2
+        reasoning_effort: medium
+    config_path: configs/config.yml
+

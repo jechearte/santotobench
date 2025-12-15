@@ -1,0 +1,84 @@
+num_turns: 40
+lead_time: 2
+seed: 42
+initial:
+  cash: 500.0
+  stock:
+    txistorra: 30
+    pan: 50
+    sidra: 20
+  prices:
+    pintxo: 3.0
+    bocadillo: 6.0
+    sidra: 6.0
+costs:
+  txistorra: 1.55
+  pan: 1
+  sidra: 2.5
+ingredient_weights:
+  txistorra: 0.4
+  pan: 0.25
+  sidra: 1.3
+worker_max_carry_weight: 10.0
+num_workers: 8
+recipes:
+  pintxo:
+    pan: 0.2
+    txistorra: 0.1
+  bocadillo:
+    pan: 0.4
+    txistorra: 0.2
+  sidra:
+    sidra: 1
+demand:
+  price_ref:
+    pintxo: 3.0
+    bocadillo: 6.0
+    sidra: 6.0
+  elasticity:
+    pintxo: 1.5
+    bocadillo: 1.3
+    sidra: 1.0
+  noise_std: 0.1
+  # Número de clientes de mercado (todos los puestos) por turno.
+  # Aproximamos la forma sumando las curvas de productos.
+  customers_curve: [12,24,24,36,12,24,48,84,108,136,172,184,188,188,188,188,188,200,204,212,196,172,140,112,88,88,80,61,45,30,30,30,28,28,28,28,22,13,12,8]
+  # Elasticidad competitiva a nivel de clientes (en torno al precio medio del ticket)
+  elasticity_customers: 2.0
+  # Perfiles de pedido multi-producto
+  order_profiles:
+    solo_pintxo:
+      pintxo: 1
+    pintxo_y_sidra:
+      pintxo: 1
+      sidra: 1
+    solo_bocadillo:
+      bocadillo: 1
+    bocadillo_y_sidra:
+      bocadillo: 1
+      sidra: 1
+  # Mezcla de perfiles por tramos horarios
+  order_mix_segments:
+    - from_turn: 0
+      to_turn: 10
+      profile_probs:
+        solo_pintxo: 0.5
+        pintxo_y_sidra: 0.2
+        solo_bocadillo: 0.2
+        bocadillo_y_sidra: 0.1
+    - from_turn: 11
+      to_turn: 24
+      profile_probs:
+        solo_pintxo: 0.2
+        pintxo_y_sidra: 0.1
+        solo_bocadillo: 0.5
+        bocadillo_y_sidra: 0.2
+    - from_turn: 25
+      to_turn: 39
+      profile_probs:
+        solo_pintxo: 0.3
+        pintxo_y_sidra: 0.2
+        solo_bocadillo: 0.2
+        bocadillo_y_sidra: 0.3
+
+

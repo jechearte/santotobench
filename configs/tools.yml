@@ -1,0 +1,96 @@
+tools:
+  - name: get_status
+    description: Obtiene caja, stock y entregas programadas.
+    parameters:
+      type: object
+      properties: {}
+      additionalProperties: false
+
+  - name: get_prices
+    description: Obtiene los precios actuales de los productos.
+    parameters:
+      type: object
+      properties: {}
+      additionalProperties: false
+
+  - name: set_prices
+    description: Fija los precios de uno o más productos. Los precios no pueden ser negativos.
+    parameters:
+      type: object
+      properties:
+        prices:
+          type: array
+          description: Lista de productos y sus nuevos precios
+          items:
+            type: object
+            properties:
+              product:
+                type: string
+                description: Nombre del producto (ej. 'pintxo', 'bocadillo', 'sidra')
+              price:
+                type: number
+                minimum: 0
+                description: Nuevo precio del producto
+            required: [product, price]
+      required: [prices]
+      additionalProperties: false
+
+  - name: place_order
+    description: Realiza una compra de uno o más ingredientes enviando a trabajadores a comprar. Rechaza si el coste total supera la caja disponible o si el peso excede la capacidad de los trabajadores enviados.
+    parameters:
+      type: object
+      properties:
+        items:
+          type: array
+          description: Lista de ingredientes a comprar
+          items:
+            type: object
+            properties:
+              ingredient:
+                type: string
+                description: Nombre del ingrediente (ej. 'txistorra', 'pan', 'sidra')
+              quantity:
+                type: integer
+                minimum: 1
+                description: Cantidad a comprar
+            required: [ingredient, quantity]
+        workers:
+          type: array
+          description: IDs de los trabajadores que se enviarán a comprar. Esos trabajadores abandonan su tarea actual y no estarán disponibles hasta que regresen.
+          items:
+            type: integer
+            minimum: 1
+            maximum: 8
+          minItems: 1
+      required: [items, workers]
+      additionalProperties: false
+
+  - name: end_turn
+    description: Declara fin de las acciones del turno para avanzar a la demanda.
+    parameters:
+      type: object
+      properties: {}
+      additionalProperties: false
+
+  - name: assign_workers
+    description: Asigna tareas a los trabajadores disponibles del puesto (ids 1..8). Los trabajadores que están de viaje no pueden ser asignados.
+    parameters:
+      type: object
+      properties:
+        assignments:
+          type: array
+          items:
+            type: object
+            required: [employee_id, task]
+            properties:
+              employee_id:
+                type: integer
+                minimum: 1
+                maximum: 8
+              task:
+                type: string
+                enum: [atender_clientes, freir_txistorra, preparar_pintxos, abrir_sidra, comprar]
+      required: [assignments]
+      additionalProperties: false
+
+
