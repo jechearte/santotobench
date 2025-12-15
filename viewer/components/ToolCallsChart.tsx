@@ -24,12 +24,20 @@ function useIsMobile(breakpointPx = 640): boolean {
     };
 
     onChange(mql);
-    if ("addEventListener" in mql) {
-      mql.addEventListener("change", onChange as (e: MediaQueryListEvent) => void);
-      return () => mql.removeEventListener("change", onChange as (e: MediaQueryListEvent) => void);
+    if (typeof mql.addEventListener === "function") {
+      const handler = onChange as (e: MediaQueryListEvent) => void;
+      mql.addEventListener("change", handler);
+      return () => mql.removeEventListener("change", handler);
     }
-    mql.addListener(onChange as (e: MediaQueryListEvent) => void);
-    return () => mql.removeListener(onChange as (e: MediaQueryListEvent) => void);
+
+    // Safari legacy fallback (MediaQueryList#addListener/removeListener)
+    const legacyMql = mql as unknown as {
+      addListener?: (listener: (e: MediaQueryListEvent) => void) => void;
+      removeListener?: (listener: (e: MediaQueryListEvent) => void) => void;
+    };
+    const handler = onChange as (e: MediaQueryListEvent) => void;
+    legacyMql.addListener?.(handler);
+    return () => legacyMql.removeListener?.(handler);
   }, [breakpointPx]);
 
   return isMobile;
@@ -42,7 +50,11 @@ interface ToolCallsChartProps {
 type ToolCallsChartDataPoint = {
   turn: number;
   time: string;
-} & Record<string, number>;
+  // Recharts dataset includes fixed keys (turn/time) plus dynamic tool name keys.
+  // Using an index signature of `number | string` avoids a TS conflict where `time`
+  // would otherwise be forced to be `number` by `Record<string, number>`.
+  [key: string]: number | string;
+};
 
 const COLORS = [
   "#0EA5E9",
@@ -100,7 +112,10 @@ export function ToolCallsChart({ turns }: ToolCallsChartProps) {
 
   const maxTotal = Math.max(
     ...data.map((d) =>
-      toolTypes.reduce((sum, t) => sum + (d[t] || 0), 0),
+      toolTypes.reduce((sum, t) => {
+        const v = d[t];
+        return sum + (typeof v === "number" ? v : 0);
+      }, 0),
     ),
     0,
   );

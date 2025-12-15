@@ -90,13 +90,20 @@ function useIsMobile(breakpointPx = 640): boolean {
     };
 
     onChange(mql);
-    if ("addEventListener" in mql) {
-      mql.addEventListener("change", onChange as (e: MediaQueryListEvent) => void);
-      return () => mql.removeEventListener("change", onChange as (e: MediaQueryListEvent) => void);
+    if (typeof mql.addEventListener === "function") {
+      const handler = onChange as (e: MediaQueryListEvent) => void;
+      mql.addEventListener("change", handler);
+      return () => mql.removeEventListener("change", handler);
     }
-    // Safari fallback
-    mql.addListener(onChange as (e: MediaQueryListEvent) => void);
-    return () => mql.removeListener(onChange as (e: MediaQueryListEvent) => void);
+
+    // Safari legacy fallback (MediaQueryList#addListener/removeListener)
+    const legacyMql = mql as unknown as {
+      addListener?: (listener: (e: MediaQueryListEvent) => void) => void;
+      removeListener?: (listener: (e: MediaQueryListEvent) => void) => void;
+    };
+    const handler = onChange as (e: MediaQueryListEvent) => void;
+    legacyMql.addListener?.(handler);
+    return () => legacyMql.removeListener?.(handler);
   }, [breakpointPx]);
 
   return isMobile;
