@@ -52,6 +52,9 @@ Thumbs.db
 # Docker
 *.log
 
+# Herramientas de desarrollo
+.playwright-mcp/
+
 # Otros
 *.pem
 coverage/
